@@ -10,8 +10,8 @@ export default function App() {
   return (
     <ThemeProvider theme={theme}>
       <NavigationContainer>
-        {/* {loggedIn ? <HomeTabs /> : <AuthStack />} */}
-        <HomeTabs />
+        {loggedIn ? <HomeTabs /> : <AuthStack />}
+        {/* <HomeTabs /> */}
       </NavigationContainer>
     </ThemeProvider>
   );

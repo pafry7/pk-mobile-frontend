@@ -38,7 +38,7 @@ const HomeTabs = () => {
         },
       })}
       tabBarOptions={{
-        activeTintColor: theme.colors.buttonPrimarybackground,
+        activeTintColor: theme.colors.buttonPrimaryBackground,
         inactiveTintColor: theme.colors.secondaryText,
       }}
     >
