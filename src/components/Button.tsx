@@ -18,6 +18,7 @@ const restyleFunctions = [spacing, border, backgroundColor];
 type Props = AllProps<Theme> & {
   onPress: () => void;
   label: string;
+  variant?: string;
   disabled?: boolean;
   loading?: boolean;
 };
@@ -25,6 +26,7 @@ type Props = AllProps<Theme> & {
 const Button = ({
   onPress,
   label,
+  variant,
   disabled,
   loading,
   ...rest
@@ -44,27 +46,35 @@ const Button = ({
       hitSlop={{ top: 10, right: 10, left: 10, bottom: 10 }}
       disabled={disabled}
     >
-      <Box
-        width={250}
-        height={50}
-        backgroundColor={backgroundColor}
-        justifyContent="center"
-        alignItems="center"
-        borderRadius="s"
-        {...props}
-      >
-        {loading ? (
-          <ActivityIndicator
-            size="small"
-            color={theme.colors.lightText}
-            testID="loading-indicator"
-          />
-        ) : (
-          <Text variant="buttonLabel" color={color}>
+      {variant === "text" ? (
+        <Box {...props}>
+          <Text fontWeight="500" textDecorationLine="underline">
             {label}
           </Text>
-        )}
-      </Box>
+        </Box>
+      ) : (
+        <Box
+          width={250}
+          height={50}
+          backgroundColor={backgroundColor}
+          justifyContent="center"
+          alignItems="center"
+          borderRadius="s"
+          {...props}
+        >
+          {loading ? (
+            <ActivityIndicator
+              size="small"
+              color={theme.colors.lightText}
+              testID="loading-indicator"
+            />
+          ) : (
+            <Text variant="buttonLabel" color={color}>
+              {label}
+            </Text>
+          )}
+        </Box>
+      )}
     </TouchableOpacity>
   );
 };

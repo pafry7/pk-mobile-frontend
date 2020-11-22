@@ -1,18 +1,16 @@
 import React from "react";
 import { ThemeProvider } from "@shopify/restyle";
-import { NavigationContainer } from "@react-navigation/native";
 import theme from "./src/common/theme";
-import { HomeTabs } from "./src/navigation/HomeTabs";
-import { AuthStack } from "./src/navigation/AuthStack";
+import { AuthProvider } from "./src/context/auth-context";
+import { Router } from "./src/navigation";
 
 export default function App() {
-  const [loggedIn, setLoggedIn] = React.useState(false);
+  console.log("I am in app");
   return (
-    <ThemeProvider theme={theme}>
-      <NavigationContainer>
-        {loggedIn ? <HomeTabs /> : <AuthStack />}
-        {/* <HomeTabs /> */}
-      </NavigationContainer>
-    </ThemeProvider>
+    <AuthProvider>
+      <ThemeProvider theme={theme}>
+        <Router />
+      </ThemeProvider>
+    </AuthProvider>
   );
 }

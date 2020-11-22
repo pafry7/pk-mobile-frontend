@@ -6,8 +6,11 @@ import TextInput from "../components/TextInput";
 import { Button } from "../components/Button";
 import { Formik } from "formik";
 import * as Yup from "yup";
+import { useAuth } from "../context/auth-context";
 
-interface LoginProps {}
+interface LoginProps {
+  navigation: any;
+}
 
 const LoginSchema = Yup.object().shape({
   password: Yup.string()
@@ -17,8 +20,13 @@ const LoginSchema = Yup.object().shape({
   email: Yup.string().email("Invalid email").required("Required"),
 });
 
-const Login: React.FC<LoginProps> = ({}) => {
+const Login: React.FC<LoginProps> = ({ navigation }) => {
+  const { login } = useAuth();
   const gradient = `linear-gradient(33.36deg, #F19F00 42.25%, #C23232 86.63%)`;
+
+  const goToRegistration = () => {
+    navigation.push("Register");
+  };
 
   return (
     <Gradient
@@ -42,20 +50,18 @@ const Login: React.FC<LoginProps> = ({}) => {
         <Formik
           validationSchema={LoginSchema}
           initialValues={{ email: "", password: "" }}
-          onSubmit={(values) => console.log(values)}
+          onSubmit={(values) => login(values)}
         >
           {({ handleChange, handleBlur, handleSubmit, errors, touched }) => (
             <Box>
-              <Box marginBottom="m">
-                <TextInput
-                  icon="mail"
-                  placeholder="Enter your Email"
-                  onChangeText={handleChange("email")}
-                  onBlur={handleBlur("email")}
-                  error={errors.email}
-                  touched={touched.email}
-                />
-              </Box>
+              <TextInput
+                icon="mail"
+                placeholder="Enter your Email"
+                onChangeText={handleChange("email")}
+                onBlur={handleBlur("email")}
+                error={errors.email}
+                touched={touched.email}
+              />
               <TextInput
                 icon="lock"
                 placeholder="Enter your Password"
@@ -66,6 +72,18 @@ const Login: React.FC<LoginProps> = ({}) => {
               />
               <Box alignItems="center" marginTop="m">
                 <Button onPress={handleSubmit} label="Zaloguj"></Button>
+                <Box
+                  flexDirection="row"
+                  alignItems="flex-end"
+                  justifyContent="center"
+                >
+                  <Text marginTop="m">Nie masz konta? </Text>
+                  <Button
+                    onPress={goToRegistration}
+                    label="Zarejestruj się"
+                    variant="text"
+                  ></Button>
+                </Box>
               </Box>
             </Box>
           )}

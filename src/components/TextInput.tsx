@@ -28,6 +28,7 @@ const TextInput = ({ icon, touched, error, ...props }: TextInputProps) => {
       borderRadius="s"
       borderWidth={StyleSheet.hairlineWidth}
       borderColor={reColor}
+      marginBottom="s"
       padding="s"
     >
       <Box padding="s">

@@ -10,6 +10,7 @@ import { Theme } from "../common/theme";
 const Tab = createBottomTabNavigator();
 
 const HomeTabs = () => {
+  console.log("i am in home tabs");
   const theme = useTheme<Theme>();
   return (
     <Tab.Navigator
@@ -17,13 +18,6 @@ const HomeTabs = () => {
       screenOptions={({ route }) => ({
         tabBarIcon: ({ color, size, focused }) => {
           let iconName = "";
-          // if (route.name === "Map") {
-          //   iconName = "map-pin";
-          // } else if (route.name === "Events") {
-          //   iconName = "star";
-          // } else if (route.name === "Calendar") {
-          //   iconName = "calendar";
-          // }
           if (route.name === "Map") {
             iconName = focused ? "map-marker" : "map-marker-outline";
           } else if (route.name === "Events") {
