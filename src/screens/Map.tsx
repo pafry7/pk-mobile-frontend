@@ -19,8 +19,8 @@ const FETCH_USERS = gql`
 const Map: React.FC<HomeProps> = ({}) => {
   const { logout, user } = useAuth();
   const { data, error, loading } = useQuery(FETCH_USERS);
+  console.log("iam in map");
   // const { data, error, loading } = { error: "x", data: "x", loading: false };
-  console.log("i am in map");
 
   const printJwt = async () => {
     const t = await SecureStore.getItemAsync("jwtToken");
@@ -40,7 +40,7 @@ const Map: React.FC<HomeProps> = ({}) => {
   return (
     <Box flex={1} alignItems="center" justifyContent="center">
       {loading ? (
-        <Text>loading...</Text>
+        <Text>loading... in map</Text>
       ) : (
         <>
           <Text mb="m" color="primaryText">
@@ -48,6 +48,9 @@ const Map: React.FC<HomeProps> = ({}) => {
           </Text>
           <Text mb="xl" color="primaryText">
             Hello {user.full_name}
+          </Text>
+          <Text mb="xl" color="primaryText">
+            Hello {data.test_users[0].full_name}
           </Text>
           <Button mb="xl" label="logout" onPress={logout}></Button>
           <Button label="print jwt" onPress={printJwt}></Button>

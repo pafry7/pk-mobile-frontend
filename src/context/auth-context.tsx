@@ -19,6 +19,7 @@ const AuthContext = React.createContext<ContextValue>({
 function AuthProvider(props) {
   const [user, setUser] = React.useState(null);
   const [isLoading, setIsLoading] = React.useState(true);
+  console.log(" i am in auth context", isLoading, user);
 
   async function bootstrapAppData() {
     await SplashScreen.preventAutoHideAsync();

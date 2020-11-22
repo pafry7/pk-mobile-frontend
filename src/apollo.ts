@@ -1,23 +1,32 @@
 import { HttpLink } from "apollo-link-http";
 import { ApolloClient } from "apollo-client";
 import { InMemoryCache } from "apollo-cache-inmemory";
+import { getToken } from "./auth-provider";
+import { from } from "apollo-link";
+import { setContext } from "apollo-link-context";
 
-const makeApolloClient = (token: string) => {
-  // create an apollo link instance, a network interface for apollo client
-  const link = new HttpLink({
+const makeApolloClient = () => {
+  const httpLink = new HttpLink({
     uri: `https://premium-grouse-91.hasura.app/v1/graphql`,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "X-Hasura-Admin-Secret": "LjcKE3fezpUypfw",
-    },
   });
-  // create an inmemory cache instance for caching graphql data
-  const cache = new InMemoryCache();
-  // instantiate apollo client with apollo link instance and cache instance
+
+  const authMiddleware = setContext(async (req, { headers }) => {
+    const token = await getToken();
+
+    return {
+      headers: {
+        ...headers,
+        Authorization: `Bearer ${token}`,
+        "X-Hasura-Admin-Secret": "LjcKE3fezpUypfw",
+      },
+    };
+  });
+
   const client = new ApolloClient({
-    link,
-    cache,
+    link: from([authMiddleware, httpLink]),
+    cache: new InMemoryCache(),
   });
+  // create an apollo link instance, a network interface for apollo client
   return client;
 };
-export default makeApolloClient;
+export { makeApolloClient };
