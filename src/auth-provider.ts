@@ -2,7 +2,9 @@ import * as SecureStore from "expo-secure-store";
 import Constants from "expo-constants";
 
 const { manifest } = Constants;
-const localAuthURL = `http://${manifest.debuggerHost.split(":").shift()}:8888`;
+const localAuthURL = `http://${manifest.debuggerHost
+  .split(":")
+  .shift()}:5001/pk-mobile-298912/us-central1`;
 const localStorageKey = "jwtToken";
 
 interface LoginProps {
@@ -24,7 +26,7 @@ async function getToken() {
 }
 
 async function handleUserResponse({ user }: any) {
-  console.log(user);
+  console.log({ user });
   await SecureStore.setItemAsync(localStorageKey, user.token);
   return user;
 }
@@ -67,16 +69,14 @@ async function client(
   if (body) {
     config.body = JSON.stringify(body);
   }
-  return fetch(`${localAuthURL}/api/${endpoint}`, config).then(
-    async (response) => {
-      const data = await response.json();
-      if (response.ok) {
-        return data;
-      } else {
-        return Promise.reject(data);
-      }
+  return fetch(`${localAuthURL}/${endpoint}`, config).then(async (response) => {
+    const data = await response.json();
+    if (response.ok) {
+      return data;
+    } else {
+      return Promise.reject(data);
     }
-  );
+  });
 }
 
 export { getToken, login, register, me, logout, localStorageKey };

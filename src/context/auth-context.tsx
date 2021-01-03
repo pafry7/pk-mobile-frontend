@@ -22,18 +22,22 @@ function AuthProvider(props) {
   console.log(" i am in auth context", isLoading, user);
 
   async function bootstrapAppData() {
-    await SplashScreen.preventAutoHideAsync();
-    let user = null;
+    try {
+      await SplashScreen.preventAutoHideAsync();
+      let user = null;
 
-    const token = await auth.getToken();
-    console.log({ token });
-    if (token) {
-      const data = await auth.me(token);
-      user = data;
+      const token = await auth.getToken();
+      console.log({ token });
+      if (token) {
+        const data = await auth.me(token);
+        user = data;
+      }
+      setUser(user);
+      setIsLoading(false);
+      await SplashScreen.hideAsync();
+    } catch (e) {
+      console.log(e);
     }
-    setUser(user);
-    setIsLoading(false);
-    await SplashScreen.hideAsync();
   }
   React.useEffect(() => {
     bootstrapAppData();
