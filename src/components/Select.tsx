@@ -6,7 +6,7 @@ import { Feather } from "@expo/vector-icons";
 
 interface SelectProps {
   handleChange: any;
-  icon: string;
+  icon?: string;
   touched?: boolean;
   error?: string;
   items: Array<{ label: string; value: string }>;
@@ -39,7 +39,9 @@ const Select: React.FC<SelectProps> = ({
         },
       }}
       items={items}
-      Icon={() => <Feather name={icon} size={16} {...{ color }} />}
+      Icon={
+        icon ? () => <Feather name={icon} size={16} {...{ color }} /> : null
+      }
     />
   );
 };

@@ -10,14 +10,21 @@ import Box from "./Box";
 import theme from "../common/theme";
 
 interface TextInputProps extends RNTextInputProps {
-  icon: string;
+  icon?: string;
   touched?: boolean;
   error?: string;
+  label?: string;
 }
 
 const SIZE = theme.borderRadii.m * 2;
 
-const TextInput = ({ icon, touched, error, ...props }: TextInputProps) => {
+const TextInput = ({
+  icon,
+  touched,
+  error,
+  label,
+  ...props
+}: TextInputProps) => {
   const reColor = !touched ? "secondaryText" : error ? "error" : "primaryText";
   const color = theme.colors[reColor];
   return (
@@ -38,6 +45,7 @@ const TextInput = ({ icon, touched, error, ...props }: TextInputProps) => {
         <RNTextInput
           underlineColorAndroid="transparent"
           placeholderTextColor={color}
+          // secureTextEntry={true}
           {...props}
         />
       </Box>
