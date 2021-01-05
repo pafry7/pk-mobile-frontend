@@ -25,7 +25,6 @@ function AuthProvider(props) {
     try {
       await SplashScreen.preventAutoHideAsync();
       let user = null;
-
       const token = await auth.getToken();
       console.log({ token });
       if (token) {
@@ -33,10 +32,12 @@ function AuthProvider(props) {
         user = data;
       }
       setUser(user);
+    } catch (e) {
+      await auth.deleteToken();
+      console.log(e, "here");
+    } finally {
       setIsLoading(false);
       await SplashScreen.hideAsync();
-    } catch (e) {
-      console.log(e);
     }
   }
   React.useEffect(() => {
