@@ -61,6 +61,7 @@ const Login: React.FC<LoginProps> = ({ navigation }) => {
                 onBlur={handleBlur("email")}
                 error={errors.email}
                 touched={touched.email}
+                textContentType="emailAddress"
               />
               <TextInput
                 icon="lock"
@@ -68,7 +69,9 @@ const Login: React.FC<LoginProps> = ({ navigation }) => {
                 onChangeText={handleChange("password")}
                 onBlur={handleBlur("password")}
                 error={errors.password}
-                touched={touched.password}
+                // touched={touched.password}
+                textContentType="password"
+                secureTextEntry={true}
               />
               <Box alignItems="center" marginTop="m">
                 <Button onPress={handleSubmit} label="Zaloguj"></Button>
