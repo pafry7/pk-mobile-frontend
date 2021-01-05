@@ -25,6 +25,10 @@ async function getToken() {
   return SecureStore.getItemAsync(localStorageKey);
 }
 
+async function deleteToken() {
+  return SecureStore.deleteItemAsync(localStorageKey);
+}
+
 async function handleUserResponse({ user }: any) {
   console.log({ user });
   await SecureStore.setItemAsync(localStorageKey, user.token);
@@ -79,4 +83,4 @@ async function client(
   });
 }
 
-export { getToken, login, register, me, logout, localStorageKey };
+export { getToken, login, register, me, logout, localStorageKey, deleteToken };
