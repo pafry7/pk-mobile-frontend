@@ -48,7 +48,11 @@ const theme = createTheme({
       textAlign: "center",
       color: "primaryText",
     },
-    subheader: {},
+    subheader: {
+      fontSize: 20,
+      fontWeight: "bold",
+      color: "primaryText",
+    },
     body: {
       fontSize: 16,
       textAlign: "center",
