@@ -1,6 +1,6 @@
 import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
-import { HomeTabs } from "./HomeTabs";
+import { MainStack } from "./MainStack";
 import { AuthStack } from "./AuthStack";
 import { useAuth } from "../context/auth-context";
 interface RouterProps {}
@@ -10,7 +10,7 @@ const Router: React.FC<RouterProps> = ({}) => {
 
   return (
     <NavigationContainer>
-      {user ? <HomeTabs /> : <AuthStack />}
+      {user ? <MainStack /> : <AuthStack />}
     </NavigationContainer>
   );
 };
