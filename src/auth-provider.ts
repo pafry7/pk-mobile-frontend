@@ -30,15 +30,14 @@ async function deleteToken() {
 }
 
 async function handleUserResponse({ user }: any) {
-  console.log({ user });
+  console.log({ user }, "handleUser response");
   await SecureStore.setItemAsync(localStorageKey, user.token);
   return user;
 }
 
-async function login({ email, password }: LoginProps) {
-  return client("login", { body: { email, password } }).then(
-    handleUserResponse
-  );
+async function login(data: LoginProps) {
+  console.log({ data });
+  return client("login", { body: data }).then(handleUserResponse);
 }
 
 async function register(data: RegisterProps) {
@@ -46,21 +45,19 @@ async function register(data: RegisterProps) {
   return client("register", { body: data }).then(handleUserResponse);
 }
 
-async function me(token: string) {
-  return client("me", { token }).then((user) => user);
+async function me() {
+  return client("me", {}).then((user) => user);
 }
 
 async function logout() {
   SecureStore.deleteItemAsync(localStorageKey);
 }
 
-async function client(
-  endpoint: string,
-  { body, token }: { body?: any; token?: string }
-) {
+export async function client(endpoint: string, { body }: { body?: any }) {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
+  const token = await getToken();
   if (token) {
     headers.Authorization = `Bearer ${token}`;
   }

@@ -7,9 +7,12 @@ const palette = {
   gray: "#686363",
   green: "#077526",
 
+  orange: "#C2A746",
+
   black: "#0B0B0B",
   white: "#FFFFFF",
   offwhite: "#F5F6FA",
+  blue: "#061161",
 };
 
 const theme = createTheme({
@@ -19,13 +22,21 @@ const theme = createTheme({
     buttonPrimaryBackground: palette.redPrimary,
     buttonLightBackground: `${palette.redPrimary}50`,
     primaryText: palette.black,
+
     secondaryText: palette.gray,
     lightText: palette.white,
 
+    grayLight: `${palette.gray}50`,
+
     success: palette.green,
+    successLight: `${palette.green}50`,
     error: palette.redDark,
+    info: palette.orange,
+    blue: palette.blue,
+    blueLight: `${palette.blue}50`,
   },
   spacing: {
+    xs: 4,
     s: 8,
     m: 16,
     l: 24,
@@ -45,7 +56,7 @@ const theme = createTheme({
     header: {
       fontSize: 24,
       fontWeight: "bold",
-      textAlign: "center",
+      // textAlign: "center",
       color: "primaryText",
     },
     subheader: {

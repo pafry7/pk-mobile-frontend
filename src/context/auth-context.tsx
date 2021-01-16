@@ -3,7 +3,7 @@ import * as auth from "../auth-provider";
 import * as SplashScreen from "expo-splash-screen";
 
 interface ContextValue {
-  user: any;
+  user: { id: string; email: string; name: string } | null;
   login: (form: any) => Promise<void>;
   logout: () => void;
   register: (form: any) => Promise<void>;
@@ -19,7 +19,6 @@ const AuthContext = React.createContext<ContextValue>({
 function AuthProvider(props) {
   const [user, setUser] = React.useState(null);
   const [isLoading, setIsLoading] = React.useState(true);
-  console.log(" i am in auth context", isLoading, user);
 
   async function bootstrapAppData() {
     try {
@@ -28,7 +27,9 @@ function AuthProvider(props) {
       const token = await auth.getToken();
       console.log({ token });
       if (token) {
-        const data = await auth.me(token);
+        console.log("here");
+        const data = await auth.me();
+        console.log("me", { data });
         user = data;
       }
       setUser(user);
