@@ -1,46 +1,59 @@
 import * as React from "react";
 import Text from "../components/Text";
 import Box from "../components/Box";
-import { FlatList, Image, TouchableOpacity } from "react-native";
+import { TouchableOpacity, Image } from "react-native";
+import { Event } from "../mocks/data";
 import { Feather } from "@expo/vector-icons";
+import { format } from "date-fns";
+import { pl } from "date-fns/esm/locale";
 
 interface PopularEventsProps {
-  events: String[];
-  handleClick: any;
+  events: Event[];
+  navigation: any;
 }
 
 const PopularEvents: React.FC<PopularEventsProps> = ({
   events,
-  handleClick,
+  navigation,
 }) => {
   const [selected, setSelected] = React.useState(0);
 
-  const Item = ({ item }) => {
+  const Item = ({ item }: { item: Event }) => {
+    const handleClick = (item: Event) => {
+      navigation.push("EventDetails", { details: item });
+    };
     return (
       <TouchableOpacity onPress={() => handleClick(item)}>
         <Box marginBottom="m">
           <Box flexDirection="row">
-            <Box
-              backgroundColor="success"
-              height={120}
-              width={90}
-              borderRadius="s"
+            <Image
+              source={
+                item.photo_uri
+                  ? { uri: item.photo_uri }
+                  : require("../../assets/george-pagan-iii-WwCTFNpZx8g-unsplash(1).jpg")
+              }
+              style={{ width: 90, height: 120, borderRadius: 8 }}
             />
-            {/* <Image
-              source={require("../../assets/george-pagan-iii-WwCTFNpZx8g-unsplash(1).jpg")}
-              style={{ width: "60%", height: 120, borderRadius: 8 }}
-            /> */}
-            <Box ml="m" alignItems="flex-start" mt="s">
+            <Box ml="m" alignItems="flex-start" mt="s" width="60%">
               <Text variant="body" fontWeight="bold" opacity={0.7}>
-                29 wrzesień 2020
+                {format(new Date(item.start_date), "d LLLL yyyy", {
+                  locale: pl,
+                })}
               </Text>
               <Text variant="body" fontWeight="bold" mt="s">
-                Planszówki
+                {item.name}
               </Text>
               <Box mt="s" flexDirection="row">
                 <Feather name="map-pin" color="black" size={14} />
-                <Text ml="s" fontSize={14}>
-                  Biblioteka
+                <Text
+                  ml="s"
+                  fontSize={14}
+                  style={{
+                    flex: 1,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  {item.place ? item.place : item.building.name}
                 </Text>
               </Box>
             </Box>
@@ -51,8 +64,8 @@ const PopularEvents: React.FC<PopularEventsProps> = ({
   };
   return (
     <Box width="100%" ml="xl" mt="m">
-      {events.map((e, index) => (
-        <Item item={e} key={`${index}-1221`} />
+      {events.map((event) => (
+        <Item item={event} key={event.id} />
       ))}
     </Box>
   );

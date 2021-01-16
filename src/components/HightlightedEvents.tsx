@@ -1,19 +1,28 @@
 import * as React from "react";
 import Text from "../components/Text";
+import { Event } from "../mocks/data";
 import Box from "../components/Box";
 import { FlatList, Image, TouchableOpacity } from "react-native";
 import { Feather } from "@expo/vector-icons";
-
+import { capitalize } from "lodash";
+import { format } from "date-fns";
+import { pl } from "date-fns/esm/locale";
 interface HightLightedEventsProps {
-  events: String[];
-  handleClick: any;
+  events: Event[];
+  navigation: any;
 }
 
 const HightLightedEvents: React.FC<HightLightedEventsProps> = ({
   events,
-  handleClick,
+  navigation,
 }) => {
-  const renderItem = ({ item, index }) => {
+  const handleClick = (item: Event) => {
+    navigation.push("EventDetails", { details: item });
+  };
+
+  const renderItem = ({ item, index }: { item: Event; index: number }) => {
+    const date = new Date(item.start_date);
+
     return (
       <TouchableOpacity onPress={() => handleClick(item)}>
         <Box
@@ -29,7 +38,7 @@ const HightLightedEvents: React.FC<HightLightedEventsProps> = ({
           shadowOpacity={0.27}
           shadowRadius={4.65}
           elevation={6}
-          width={220}
+          width={250}
           height={220}
           mt="m"
           borderRadius="s"
@@ -37,7 +46,7 @@ const HightLightedEvents: React.FC<HightLightedEventsProps> = ({
         >
           <Box height="60%" borderRadius="s">
             <Image
-              source={require("../../assets/george-pagan-iii-WwCTFNpZx8g-unsplash(1).jpg")}
+              source={{ uri: item.photo_uri }}
               style={{
                 width: "100%",
                 height: "100%",
@@ -56,20 +65,20 @@ const HightLightedEvents: React.FC<HightLightedEventsProps> = ({
               justifyContent="center"
             >
               <Text variant="body" fontWeight="bold" color="lightText">
-                30
+                {format(date, "d", { locale: pl })}
               </Text>
               <Text variant="body" fontWeight="bold" color="lightText">
-                Wt
+                {capitalize(format(date, "iiiiii", { locale: pl }))}
               </Text>
             </Box>
             <Box ml="s">
               <Text variant="body" fontWeight="bold">
-                Baltic Days 2020
+                {item.name}
               </Text>
               <Box mt="s" flexDirection="row" opacity={0.8}>
                 <Feather name="map-pin" color="black" size={14} />
                 <Text ml="s" fontSize={14}>
-                  Biblioteka
+                  {item.place ? item.place : item.building.name}
                 </Text>
               </Box>
             </Box>
@@ -85,7 +94,7 @@ const HightLightedEvents: React.FC<HightLightedEventsProps> = ({
         data={events}
         renderItem={renderItem}
         showsHorizontalScrollIndicator={false}
-        keyExtractor={(item) => `${item}-dada`}
+        keyExtractor={(item) => `${item.id}`}
       />
     </Box>
   );

@@ -30,17 +30,19 @@ const TextInput = ({
   return (
     <Box
       flexDirection="row"
-      height={48}
-      alignItems="center"
+      height={props.multiline ? 120 : 48}
+      alignItems={props.multiline ? null : "center"}
       borderRadius="s"
       borderWidth={StyleSheet.hairlineWidth}
       borderColor={reColor}
       marginBottom="s"
       padding="s"
     >
-      <Box padding="s">
-        <Icon name={icon} size={16} {...{ color }} />
-      </Box>
+      {icon ? (
+        <Box padding="s">
+          <Icon name={icon} size={16} {...{ color }} />
+        </Box>
+      ) : null}
       <Box flex={1}>
         <RNTextInput
           underlineColorAndroid="transparent"

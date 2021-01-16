@@ -25,7 +25,7 @@ const Select: React.FC<SelectProps> = ({
   const color = theme.colors[reColor];
   return (
     <RNPickerSelect
-      onValueChange={handleChange("course")}
+      onValueChange={handleChange}
       placeholder={{
         label: placeholder,
         value: "",

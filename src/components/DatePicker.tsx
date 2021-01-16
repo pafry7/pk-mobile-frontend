@@ -1,20 +1,43 @@
 import * as React from "react";
+import { split } from "lodash";
 import Box from "../components/Box";
-import Text from "../components/Text";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { Button } from "./Button";
-import { TouchableOpacity } from "react-native-gesture-handler";
 import { Feather } from "@expo/vector-icons";
 
 interface DatePickerProps {
-  value: any;
   setValue: any;
 }
 
-const DatePicker: React.FC<DatePickerProps> = ({}) => {
-  const [showDatePicker, setShowDatePicker] = React.useState(true);
-  const [showTimePicker, setShowTimePicker] = React.useState(true);
+const DatePicker: React.FC<DatePickerProps> = ({ setValue }) => {
   const [date, setDate] = React.useState(new Date());
+  const [time, setTime] = React.useState(new Date());
+
+  const onDateChange = (_, selectedDate) => {
+    if (selectedDate) {
+      setDate(selectedDate);
+      setValue(
+        new Date(
+          `${selectedDate
+            .toISOString()
+            .substring(0, 10)}${time.toISOString().substring(10)}`
+        )
+      );
+      // console.log(time.toISOString().substring(10));
+    }
+  };
+  const onTimeChange = (_, selectedTime) => {
+    if (selectedTime) {
+      setTime(selectedTime);
+      setValue(
+        new Date(
+          `${date
+            .toISOString()
+            .substring(0, 10)}${selectedTime.toISOString().substring(10)}`
+        )
+      );
+    }
+  };
+
   return (
     <Box flexDirection="row" alignItems="center">
       <Feather name="calendar" size={18} color="black" />
@@ -24,7 +47,7 @@ const DatePicker: React.FC<DatePickerProps> = ({}) => {
         mode="date"
         is24Hour={true}
         display="default"
-        onChange={(e) => console.log(e)}
+        onChange={onDateChange}
         neutralButtonLabel="test"
         locale="pl-PL"
         style={{ marginLeft: 8, width: 120 }}
@@ -33,12 +56,12 @@ const DatePicker: React.FC<DatePickerProps> = ({}) => {
       <Feather name="clock" size={18} color="black" />
       <DateTimePicker
         testID="default"
-        value={date}
+        value={time}
         mode="time"
-        locale="pl-PL"
         is24Hour={true}
         display="default"
-        onChange={(e) => console.log(e)}
+        onChange={onTimeChange}
+        timeZoneOffsetInMinutes={0}
         style={{ marginLeft: 8, width: 100 }}
       />
     </Box>

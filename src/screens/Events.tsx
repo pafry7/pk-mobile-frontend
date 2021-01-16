@@ -1,61 +1,101 @@
 import React from "react";
+import { filter } from "lodash";
 import { Chip } from "../components/Chip";
 import Box from "../components/Box";
 import Text from "../components/Text";
 import { setStatusBarStyle } from "expo-status-bar";
+import { format } from "date-fns";
 import { HightLightedEvents } from "../components/HightlightedEvents";
 import { PopularEvents } from "../components/PopularEvents";
+import useDebounce from "../common/useDebounce";
 import TextInput from "../components/ElevatedTextInput";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Gradient from "react-native-css-gradient";
+import { events } from "../mocks/data";
 import { Feather } from "@expo/vector-icons";
 import gql from "graphql-tag";
 import { useLazyQuery, useQuery } from "@apollo/react-hooks";
-import { Modal, ScrollView, TouchableWithoutFeedback } from "react-native";
+import { types } from "../mocks/data";
+import { ScrollView } from "react-native";
 import { useTheme } from "@shopify/restyle";
 import { Theme } from "../common/theme";
 import { TouchableOpacity } from "react-native-gesture-handler";
-import { Button } from "../components/Button";
 import { AddEventModal } from "../components/AddEventModal";
+import { NoItems } from "../components/NoItems";
 
 interface HomeProps {
   navigation: any;
 }
-const FETCH_USERS = gql`
-  query {
-    events {
-      id
-      latitude
-      longitude
-      end_date
-      description
+
+const FETCH_EVENTS = gql`
+  query($date: date) {
+    events(where: { start_date: { _gt: $date } }) {
+      name
+      student {
+        photo_uri
+        name
+        role
+      }
       building {
+        name
         latitude
         longitude
-        name
       }
-      name
-      photo
-      place
+      id
+      end_date
       start_date
+      description
+      place
+      latitude
+      longitude
+      events_types {
+        type {
+          name
+          id
+        }
+      }
+      photo_uri
     }
   }
 `;
 const Events: React.FC<HomeProps> = ({ navigation }) => {
-  // const [getUsers, { data, error, loading }] = useLazyQuery(FETCH_USERS);
+  const date = format(new Date(), "yyyy-MM-dd");
+  // const { data, error, loading } = useQuery(FETCH_EVENTS, {variables:{date: date}});
+  // console.log(data, error, loading);
   const [modalVisible, setModalVisible] = React.useState(false);
-  console.log({ modalVisible });
+  const [search, setSearch] = React.useState("");
+  const [type, setType] = React.useState("wszystkie");
   const theme = useTheme<Theme>();
+  // const events = data.events;
+  const debouncedValue = useDebounce(search, 750);
 
-  // console.log({ data });
+  let filteredEvents = events;
+  if (type !== "wszystkie") {
+    filteredEvents = filter(
+      events,
+      (event) => event.events_types[0].type.id === type
+    );
+  }
+
+  if (debouncedValue) {
+    filteredEvents = filter(filteredEvents, (event) =>
+      new RegExp(debouncedValue, "i").test(event.name)
+    );
+  }
+
+  const highligtedEvents = filter(
+    filteredEvents,
+    (event) => event.student.role === "university"
+  );
+  const popularEvents = filter(
+    filteredEvents,
+    (event) => event.student.role === "user"
+  );
+
   const black = theme.colors.primaryText;
 
-  // change status bar to dark
   React.useEffect(() => {
     setStatusBarStyle("dark");
   }, []);
-
-  const test = ["Wszystkie", "Targi", "Wykłady", "Imprezy", "Spotkania"];
 
   return (
     <Box width="100%" height="100%" backgroundColor="mainBackground">
@@ -77,33 +117,45 @@ const Events: React.FC<HomeProps> = ({ navigation }) => {
             </TouchableOpacity>
           </Box>
           <Box pl="xl" width={300} mt="l">
-            <TextInput icon="search" placeholder="Szukaj" />
-          </Box>
-          <Box mt="l">
-            <Chip labels={test} />
-          </Box>
-          <Box mt="m">
-            <Text color="primaryText" variant="subheader" pl="l">
-              Wyróżnione
-            </Text>
-            <HightLightedEvents
-              events={["Test", "124", "1"]}
-              handleClick={() =>
-                navigation.push("EventDetails", { details: "xDD" })
-              }
+            <TextInput
+              icon="search"
+              placeholder="Szukaj"
+              onChangeText={setSearch}
             />
           </Box>
           <Box mt="l">
-            <Text color="primaryText" variant="subheader" pl="l">
-              Popularne
-            </Text>
-            <PopularEvents
-              events={["1", "2", "3", "4"]}
-              handleClick={() =>
-                navigation.push("EventDetails", { details: "xDD" })
-              }
+            <Chip
+              types={[
+                { name: "Wszystkie", id: "wszystkie" },
+                ...types.data.types,
+              ]}
+              setValue={setType}
             />
           </Box>
+          {highligtedEvents.length > 0 ? (
+            <Box mt="m">
+              <Text color="primaryText" variant="subheader" pl="l">
+                Wyróżnione
+              </Text>
+              <HightLightedEvents
+                events={highligtedEvents}
+                navigation={navigation}
+              />
+            </Box>
+          ) : null}
+          {popularEvents.length > 0 ? (
+            <Box mt="l">
+              <Text color="primaryText" variant="subheader" pl="l">
+                Popularne
+              </Text>
+              <PopularEvents navigation={navigation} events={popularEvents} />
+            </Box>
+          ) : null}
+          {popularEvents.length === 0 && highligtedEvents.length === 0 ? (
+            <Box mt="xl" alignItems="center" justifyContent="center">
+              <NoItems message="Nie ma takich wydarzeń" />
+            </Box>
+          ) : null}
         </ScrollView>
         <AddEventModal
           modalVisible={modalVisible}

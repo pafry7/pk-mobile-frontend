@@ -3,12 +3,22 @@ import Text from "../components/Text";
 import Box from "../components/Box";
 import { FlatList, TouchableOpacity } from "react-native";
 
+interface Type {
+  id: string;
+  name: string;
+}
 interface ChipProps {
-  labels: String[];
+  types: Type[];
+  setValue: any;
 }
 
-const Chip: React.FC<ChipProps> = ({ labels }) => {
+const Chip: React.FC<ChipProps> = ({ types, setValue }) => {
   const [selected, setSelected] = React.useState(0);
+
+  const handleChange = (index: number, label: string) => {
+    setSelected(index);
+    setValue(label);
+  };
 
   const renderItem = ({ item, index }) => {
     const backgroundColor =
@@ -16,7 +26,7 @@ const Chip: React.FC<ChipProps> = ({ labels }) => {
     const color = index === selected ? "lightText" : "primaryText";
 
     return (
-      <TouchableOpacity onPress={() => setSelected(index)}>
+      <TouchableOpacity onPress={() => handleChange(index, item.id)}>
         <Box
           ml={index === 0 ? "xl" : null}
           height={32}
@@ -37,7 +47,7 @@ const Chip: React.FC<ChipProps> = ({ labels }) => {
           shadowRadius={4.65}
           elevation={6}
         >
-          <Text color={color}>{item}</Text>
+          <Text color={color}>{item.name}</Text>
         </Box>
       </TouchableOpacity>
     );
@@ -46,10 +56,10 @@ const Chip: React.FC<ChipProps> = ({ labels }) => {
     <Box width="100%">
       <FlatList
         horizontal
-        data={labels}
+        data={types}
         renderItem={renderItem}
         showsHorizontalScrollIndicator={false}
-        keyExtractor={(item) => `${item}-damdo21`}
+        keyExtractor={(item) => item.id}
       />
     </Box>
   );

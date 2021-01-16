@@ -1,50 +1,123 @@
 import * as React from "react";
-import { Dimensions, Image, Modal, StyleSheet } from "react-native";
+import * as Yup from "yup";
+import { Platform, Modal, KeyboardAvoidingView } from "react-native";
 import Box from "../components/Box";
 import Text from "../components/Text";
+import { useMutation } from "@apollo/react-hooks";
+import gql from "graphql-tag";
 import { Button } from "../components/Button";
 import { SafeAreaView } from "react-native-safe-area-context";
-import MapView from "react-native-maps";
 import { DatePicker } from "../components/DatePicker";
 import { useTheme } from "@shopify/restyle";
 import { Theme } from "../common/theme";
 import TextInput from "./TextInput";
+import { buildings, types } from "../mocks/data";
+import { Formik } from "formik";
 import { Chip } from "./Chip";
 import { ScrollView, TouchableOpacity } from "react-native-gesture-handler";
 import { Select } from "./Select";
+import { useSnackbar } from "../context/snackbar-context";
+import { EventImagePicker } from "./EventImagePicker";
+import { PlaceTabs } from "./PlaceTabs";
+import { MapWithPin } from "./MapWithPin";
+import { useAuth } from "../context/auth-context";
 
+const CLOUDINARY_API = "https://api.cloudinary.com/v1_1/dyikas7j8/image/upload";
+
+const ADD_EVENT = gql`
+  mutation($event: events_insert_input!) {
+    insert_events_one(object: $event) {
+      id
+    }
+  }
+`;
 interface AddEventModalProps {
   modalVisible: boolean;
   setModalVisible: (e: boolean) => void;
 }
-const styles = StyleSheet.create({
-  mapStyle: {
-    borderRadius: 8,
-    ...StyleSheet.absoluteFillObject,
-  },
+
+const EventSchema = Yup.object().shape({
+  name: Yup.string().min(3, "Too Short!").max(50, "Too Long!"),
+  // .required("Required"),
+  // description: Yup.string().max(240, "Too long!").required("Required"),
+  description: Yup.string().max(240, "Too long!"),
+  building_fk: Yup.string(),
+  place: Yup.string(),
 });
-
-const labels = ["Targi", "Wykład", "Impreza", "Spotkanie"];
-const buildings = [
-  { label: "Biblioteka", value: "Biblioteka" },
-  { label: "Działowania", value: "Działawnia" },
-];
-
-type PlaceType = "CUSTOM" | "BUILDING";
 
 const AddEventModal: React.FC<AddEventModalProps> = ({
   modalVisible,
   setModalVisible,
 }) => {
-  const [placeType, setPlaceType] = React.useState<PlaceType>("BUILDING");
+  const [image, setImage] = React.useState(null);
+  const [startTime, setStartTime] = React.useState(new Date());
+  const [endTime, setEndTime] = React.useState(new Date());
+  const [eventType, setEventType] = React.useState("");
+  const [coordinates, setCoordinates] = React.useState(null);
+  const { showSnackbar } = useSnackbar();
+  const { user } = useAuth();
   const theme = useTheme<Theme>();
+  const [addEvent, { error, loading }] = useMutation(ADD_EVENT);
 
-  const { height, width } = Dimensions.get("window");
-  const LATITUDE = 50.07190457956277;
-  const LONGITUDE = 19.941856485955427;
-  const LATITUDE_DELTA = 0.005;
-  const LONGITUDE_DELTA = LATITUDE_DELTA * (width / height); //minus bottom nav
+  const changedBuildings = buildings.data.buildings.map((building) => ({
+    label: building.name,
+    value: building.id,
+  }));
+  const cloudinaryUpload = async (photo) => {
+    const data = new FormData();
+    data.append("file", photo);
+    data.append("upload_preset", "pk-mobile");
+    data.append("cloud_name", "dyikas7j8");
+    try {
+      const response = await fetch(
+        "https://api.cloudinary.com/v1_1/dyikas7j8/image/upload",
+        {
+          method: "post",
+          body: data,
+        }
+      ).then((res) => res.json());
+      return response.secure_url;
+    } catch (e) {
+      console.log(e);
+      return null;
+    }
+  };
+  const createEvent = async (e) => {
+    try {
+      let photo_uri = null;
+      if (image) {
+        console.log("here");
+        photo_uri = await cloudinaryUpload(image);
+      }
+      addEvent({
+        variables: {
+          event: {
+            start_date: startTime,
+            end_date: endTime,
+            latitude: coordinates?.latitude ? coordinates.latitude : null,
+            longitude: coordinates?.longitude ? coordinates.longitude : null,
+            place: e.place ? e.place : null,
+            name: e.name,
+            photo_uri: photo_uri ? photo_uri : null,
+            description: e.description,
+            building_fk: e.building_fk ? e.building_fk : null,
+            student_id: user.id,
+            events_types: { data: { id_type: eventType } },
+          },
+        },
+      });
+      setModalVisible(false);
+      setCoordinates(null); // apparently modal is still in DOM,just hided
+      setImage(null);
+      showSnackbar("Test", "success");
+    } catch (error) {
+      console.log(error);
+      showSnackbar("Nastąpił problem, spróbuj ponownie.", "error");
+    }
+  };
+
   const backgroundColor = theme.colors.mainBackground;
+
   return (
     <Modal
       visible={modalVisible}
@@ -58,224 +131,142 @@ const AddEventModal: React.FC<AddEventModalProps> = ({
           justifyContent: "space-between",
         }}
       >
-        <ScrollView>
-          <Box
-            alignItems="center"
-            justifyContent="space-between"
-            paddingLeft="l"
-            mt="xl"
-            flexDirection="row"
-          >
-            <Text color="primaryText" variant="header">
-              Stwórz wydarzenie
-            </Text>
-            <TouchableOpacity onPress={() => setModalVisible(false)}>
-              <Text mr="l" color="error">
-                Anuluj
-              </Text>
-            </TouchableOpacity>
-          </Box>
-          <Box mt="xl" mb="xl">
-            <Box width="80%" ml="xl">
-              <Text mb="s">Nazwa wydarzenia</Text>
-              <TextInput
-                placeholder="Nazwa"
-                onChangeText={() => console.log("xD")}
-              />
-            </Box>
-            <Box mt="m" ml="xl">
-              <Text mb="s">Miejsce</Text>
-              <Box
-                flexDirection="row"
-                justifyContent="space-between"
-                width={210}
+        <Formik
+          validationSchema={EventSchema}
+          initialValues={{
+            name: "",
+            description: "",
+            place: "",
+            building_fk: "",
+          }}
+          onSubmit={(values) => createEvent(values)}
+        >
+          {({
+            handleChange,
+            handleBlur,
+            handleSubmit,
+            errors,
+            touched,
+            setFieldValue,
+          }) => (
+            <>
+              <KeyboardAvoidingView
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
+                style={{ flex: 1 }}
               >
-                <TouchableOpacity onPress={() => setPlaceType("BUILDING")}>
+                <ScrollView>
                   <Box
-                    width={100}
-                    height={40}
-                    borderRadius="s"
                     alignItems="center"
-                    backgroundColor={
-                      placeType === "BUILDING" ? "primaryText" : "tabBackground"
-                    }
-                    justifyContent="center"
-                    shadowColor="primaryText"
-                    shadowOffset={{
-                      width: 0,
-                      height: 3,
-                    }}
-                    shadowOpacity={0.27}
-                    shadowRadius={4.65}
-                    elevation={6}
+                    justifyContent="space-between"
+                    paddingLeft="l"
+                    mt="xl"
+                    flexDirection="row"
                   >
-                    <Text
-                      color={
-                        placeType === "BUILDING" ? "lightText" : "primaryText"
-                      }
-                    >
-                      Budynek PK
+                    <Text color="primaryText" variant="header">
+                      Stwórz wydarzenie
                     </Text>
+                    <TouchableOpacity onPress={() => setModalVisible(false)}>
+                      <Text mr="l" color="error">
+                        Anuluj
+                      </Text>
+                    </TouchableOpacity>
                   </Box>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => setPlaceType("CUSTOM")}>
-                  <Box
-                    width={100}
-                    height={40}
-                    backgroundColor={
-                      placeType === "CUSTOM" ? "primaryText" : "tabBackground"
-                    }
-                    borderRadius="s"
-                    justifyContent="center"
-                    alignItems="center"
-                    shadowColor="primaryText"
-                    shadowOffset={{
-                      width: 0,
-                      height: 3,
-                    }}
-                    shadowOpacity={0.27}
-                    shadowRadius={4.65}
-                    elevation={6}
-                  >
-                    <Text
-                      color={
-                        placeType === "CUSTOM" ? "lightText" : "primaryText"
-                      }
-                    >
-                      Własne
-                    </Text>
-                  </Box>
-                </TouchableOpacity>
-              </Box>
-            </Box>
-            <Box mt="m" ml="xl" width="80%">
-              {placeType === "BUILDING" ? (
-                <>
-                  <Text mb="s">Budynek</Text>
-                  <Select
-                    icon="home"
-                    placeholder="Budynek"
-                    items={buildings}
-                    handleChange={() => console.log("building selected")}
-                    // error={errors.laboratoryGroup}
-                    // touched={touched.laboratoryGroup}
-                  />
-                </>
-              ) : (
-                <>
-                  <Text mb="s">Nazwa miejsca</Text>
-                  <TextInput
-                    placeholder="Miejsce"
-                    onChange={() => console.log("xD")}
-                  />
-                  <Box width="100%" height={200}>
-                    <MapView
-                      style={styles.mapStyle}
-                      showsUserLocation
-                      initialRegion={{
-                        latitude: LATITUDE,
-                        longitude: LONGITUDE,
-                        latitudeDelta: LATITUDE_DELTA,
-                        longitudeDelta: LONGITUDE_DELTA,
-                      }}
-                      onRegionChangeComplete={(e) => {
-                        console.log(e);
-                      }}
-                    >
-                      <Image
-                        resizeMode="contain"
-                        style={{
-                          left: "50%",
-                          top: "50%",
-                          marginLeft: -24,
-                          marginTop: -48,
-                          height: 50,
-                          width: 50,
-                          position: "absolute",
-                        }}
-                        source={require("../../assets/marker.png")}
+                  <Box mt="xl" mb="xl">
+                    <Box width="80%" ml="xl">
+                      <EventImagePicker setEventImage={setImage} />
+                    </Box>
+                    <Box width="80%" ml="xl" mt="m">
+                      <Text mb="s">Nazwa wydarzenia</Text>
+                      <TextInput
+                        placeholder="Nazwa"
+                        onChangeText={handleChange("name")}
+                        onBlur={handleBlur("name")}
+                        error={errors.name}
+                        touched={touched.name}
                       />
-                    </MapView>
-                  </Box>
-                </>
-              )}
-            </Box>
-
-            <Box mt="m" ml="xl">
-              <Text mb="s">Początek</Text>
-              <DatePicker value={""} setValue={""} />
-            </Box>
-            <Box mt="m" ml="xl">
-              <Text mb="s">Koniec</Text>
-              <DatePicker value={""} setValue={""} />
-            </Box>
-            <Box mt="m" mb="xl">
-              <Text ml="xl" mb="s">
-                Typ
-              </Text>
-              <Chip labels={labels} />
-            </Box>
-          </Box>
-        </ScrollView>
-        {/**button nie chce wspolpracowac */}
-        <Button
-          label="Gotowe"
-          onPress={() => {
-            console.log("gotowe");
-          }}
-          alignSelf="center"
-          position="absolute"
-          bottom={20}
-          shadowColor="primaryText"
-          shadowOffset={{
-            width: 0,
-            height: 3,
-          }}
-          shadowOpacity={0.27}
-          shadowRadius={4.65}
-          elevation={6}
-        />
-        {/* <Formik
-                validationSchema={LoginSchema}
-                initialValues={{ email: "", password: "" }}
-                onSubmit={(values) => login(values)}
-              >
-                {({
-                  handleChange,
-                  handleBlur,
-                  handleSubmit,
-                  errors,
-                  touched,
-                }) => (
-                  <Box> */}
-        {/* <TextInput
-                      icon="lock"
-                      placeholder="Enter your Password"
-                      onChangeText={handleChange("password")}
-                      onBlur={handleBlur("password")}
-                      error={errors.password}
-                      // touched={touched.password}
-                      textContentType="password"
-                      secureTextEntry={true}
-                    />
-                    <Box alignItems="center" marginTop="m">
-                      <Button onPress={handleSubmit} label="Zaloguj"></Button>
-                      <Box
-                        flexDirection="row"
-                        alignItems="flex-end"
-                        justifyContent="center"
-                      >
-                        <Text marginTop="m">Nie masz konta? </Text>
-                        <Button
-                          onPress={goToRegistration}
-                          label="Zarejestruj się"
-                          variant="text"
-                        ></Button>
-                      </Box>
+                    </Box>
+                    <Box mt="m" ml="xl" width="80%">
+                      <PlaceTabs
+                        setCoordinates={setCoordinates}
+                        setFieldValue={setFieldValue}
+                        firstTab={
+                          <>
+                            <Text mb="s">Budynek</Text>
+                            <Select
+                              icon="home"
+                              placeholder="Budynek"
+                              items={changedBuildings}
+                              handleChange={handleChange("building_fk")}
+                              error={errors.building_fk}
+                              touched={touched.building_fk}
+                            />
+                          </>
+                        }
+                        secondTab={
+                          <>
+                            <Text mb="s">Nazwa miejsca</Text>
+                            <TextInput
+                              placeholder="Miejsce"
+                              onChangeText={handleChange("place")}
+                              onBlur={handleBlur("place")}
+                              error={errors.place}
+                              touched={touched.place}
+                            />
+                            <MapWithPin
+                              coordinates={coordinates}
+                              setCoordinates={setCoordinates}
+                            />
+                          </>
+                        }
+                      />
+                    </Box>
+                    <Box mt="m" ml="xl">
+                      <Text mb="s">Początek</Text>
+                      <DatePicker setValue={setStartTime} />
+                    </Box>
+                    <Box mt="m" ml="xl">
+                      <Text mb="s">Koniec</Text>
+                      <DatePicker setValue={setEndTime} />
+                    </Box>
+                    <Box mt="m">
+                      <Text ml="xl" mb="s">
+                        Typ
+                      </Text>
+                      <Chip types={types.data.types} setValue={setEventType} />
+                    </Box>
+                    <Box mt="m" mb="xl" width="80%" ml="xl">
+                      <Text mb="s">Opis</Text>
+                      <TextInput
+                        placeholder="Opis"
+                        onChangeText={handleChange("description")}
+                        onBlur={handleBlur("description")}
+                        error={errors.description}
+                        touched={touched.description}
+                        maxLength={240}
+                        multiline
+                        textAlignVertical="top"
+                      />
                     </Box>
                   </Box>
-                )}
-              </Formik> */}
+                </ScrollView>
+              </KeyboardAvoidingView>
+              <Box position="absolute" bottom={20} alignSelf="center">
+                <Button
+                  label="Gotowe"
+                  onPress={handleSubmit}
+                  shadowColor="primaryText"
+                  shadowOffset={{
+                    width: 0,
+                    height: 3,
+                  }}
+                  shadowOpacity={0.27}
+                  shadowRadius={4.65}
+                  elevation={6}
+                />
+              </Box>
+            </>
+          )}
+        </Formik>
       </SafeAreaView>
     </Modal>
   );
